@@ -130,10 +130,6 @@ class SimCLR(BaseMethod):
 
         indexes = batch[0]
 
-        # xfm = DTCWTForward(J=3, biort='near_sym_b', qshift='qshift_b').cuda()
-        # X = torch.randn(batch[0]).cuda()
-        # LL, (LH, HL, HH) = xfm(X)
-
         out = super().training_step(batch, batch_idx)
         class_loss = out["loss"]
         z = torch.cat(out["z"])

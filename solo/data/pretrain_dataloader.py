@@ -105,25 +105,16 @@ class GaussianBlur:
         return img
 
 class DWT3D:
-    def __init__(self, wavelet='haar', mode='symmetric', level=1):
+    def __init__(self, wavelet='haar'):
         self.wavelet = wavelet
-        self.mode = mode
-        self.level = level
     def __call__(self, img: Image) -> Image:
-        """Applies DWT to an input image.
-
-        Args:
-            img (Image): an image in the PIL.Image format.
-
-        Returns:
-            Image: DWT image.
-        """
         img = np.array(img)
         a,b,c= img.shape
+        # print(a,b,c)
         #channel-wise DWT
-        xaR, (xhR, xvR, xdR) = pywt.dwt2(img[:,:,0], self.wavelet,mode=self.mode)
-        xaB, (xhB, xvB, xdB) = pywt.dwt2(img[:,:,2], self.wavelet,mode=self.mode)
-        xaG, (xhG, xvG, xdG) = pywt.dwt2(img[:,:,1], self.wavelet,mode=self.mode)
+        xaR, (xhR, xvR, xdR) = pywt.dwt2(img[:,:,0], self.wavelet)
+        xaB, (xhB, xvB, xdB) = pywt.dwt2(img[:,:,2], self.wavelet)
+        xaG, (xhG, xvG, xdG) = pywt.dwt2(img[:,:,1], self.wavelet)
 
         shape=(a//2,a//2,c)
         #xa, (xh, xv, xd) these are the four components of the DWT of the color image
@@ -133,11 +124,12 @@ class DWT3D:
         xd = np.zeros(shape, dtype=np.float32)
 
         xa[:,:,0] = xaR; xa[:,:,1] = xaG; xa[:,:,2] = xaB
-        xh[:,:,0] = xhR; xh[:,:,1] = xhG; xh[:,:,2] = xhB
-        xv[:,:,0] = xvR; xv[:,:,1] = xvG; xv[:,:,2] = xvB
-        xd[:,:,0] = xdR; xd[:,:,1] = xdG; xd[:,:,2] = xdB
-
-        return xa
+        # xh[:,:,0] = xhR; xh[:,:,1] = xhG; xh[:,:,2] = xhB
+        # xv[:,:,0] = xvR; xv[:,:,1] = xvG; xv[:,:,2] = xvB
+        # xd[:,:,0] = xdR; xd[:,:,1] = xdG; xd[:,:,2] = xdB
+        xA = xa/255
+        xA = xA*0.3
+        return xA
 
 class Solarization:
     """Solarization as a callable object."""
@@ -306,8 +298,6 @@ def build_transform_pipeline(dataset, cfg):
                 [DWT3D()]
             ),
         )
-    else:
-        pass
 
     augmentations.append(transforms.ToTensor())
     augmentations.append(transforms.Normalize(mean=mean, std=std))

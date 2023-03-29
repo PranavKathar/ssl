@@ -91,6 +91,7 @@ def test_transforms():
             "solarization": {"prob": 0.2},
             "equalization": {"prob": 0.0},
             "horizontal_flip": {"prob": 0.5},
+            # "dwt": {"enabled": True},
             "num_crops": 2,
         }
     )
@@ -110,6 +111,7 @@ def test_transforms():
             "solarization": {"prob": 0.2},
             "equalization": {"prob": 0.0},
             "horizontal_flip": {"prob": 0.5},
+            # "dwt": {"enabled": True},
             "num_crops": 6,
         }
     )
@@ -152,6 +154,7 @@ def test_data():
             "solarization": {"prob": 0.2},
             "equalization": {"prob": 0.0},
             "horizontal_flip": {"prob": 0.5},
+            # "dwt": {"enabled": True},
             "num_crops": 2,
         }
     )

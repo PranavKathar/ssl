@@ -42,10 +42,14 @@ checkpoint:
   dir: "trained_models"
   frequency: 1
 auto_resume:
-  enabled: True
+  enabled: False
+# knn_eval:
+#   enabled: True
+#   k: 20
+#   distance_func: "euclidean"
 
 # overwrite PL stuff
-max_epochs: 150
+max_epochs: 1000
 devices: [0]
 sync_batchnorm: True
 accelerator: "gpu"
