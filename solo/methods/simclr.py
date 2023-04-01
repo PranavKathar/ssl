@@ -129,46 +129,61 @@ class SimCLR(BaseMethod):
         """
 
         indexes = batch[0]
-
-        out = super().training_step(batch, batch_idx)
-        class_loss = out["loss"]
-        z = torch.cat(out["z"])
+        
+        # print("HERE",batch[1][1].shape)
+        # print("HERE2",batch_idx)
+        # print("HERE",batch[2].shape)
+        # print("HERE3",indexes.shape) 
+        out_a = super().training_step(batch.copy(), batch_idx,0)
+        out_h = super().training_step(batch.copy(), batch_idx,1)
+        out_v = super().training_step(batch.copy(), batch_idx,2)
+        out_d = super().training_step(batch.copy(), batch_idx,3)
+        # class_loss = out["loss"]
+        # print("LOSS",len(out["z"]))
+        # z = torch.cat(out["z"])
+        # print("LOSS1",z.shape)
+        z_a = torch.cat(out_a["z"])
+        z_h = torch.cat(out_h["z"])
+        z_v = torch.cat(out_v["z"])
+        z_d = torch.cat(out_d["z"])
 
         # ------- contrastive loss -------
         n_augs = self.num_large_crops + self.num_small_crops
         indexes = indexes.repeat(n_augs)
 
-        nce_loss = simclr_loss_func(
-            z,
+        # nce_loss = simclr_loss_func(
+        #     z,
+        #     indexes=indexes,
+        #     temperature=self.temperature,
+        # )
+
+        approx_loss = simclr_loss_func(
+            z_a,
             indexes=indexes,
             temperature=self.temperature,
         )
 
-        approx_loss = simclr_loss_func(
-            a,
-            indexes=indexes_approx,
-            temperature=self.temperature,
-        )
-
         hzt_loss = simclr_loss_func(
-            hzt,
-            indexes=indexes_hzt,
+            z_h,
+            indexes=indexes,
             temperature=self.temperature,
         )
 
         ver_loss = simclr_loss_func(
-            ver,
-            indexes=indexes_ver,
+            z_v,
+            indexes=indexes,
             temperature=self.temperature,
         )
 
         dia_loss = simclr_loss_func(
-            dia,
-            indexes=indexes_dia,
+            z_d,
+            indexes=indexes,
             temperature=self.temperature,
         )
 
+        total = approx_loss + hzt_loss + ver_loss + dia_loss
+        # self.log("train_nce_loss", nce_loss, on_epoch=True, sync_dist=True)
+        self.log("train_total_loss", total, on_epoch=True, sync_dist=True)
 
-        self.log("train_nce_loss", nce_loss, on_epoch=True, sync_dist=True)
-
-        return nce_loss + class_loss +
+        # return nce_loss + class_loss
+        return total

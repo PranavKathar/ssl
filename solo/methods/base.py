@@ -484,7 +484,7 @@ class BaseMethod(pl.LightningModule):
 
         return self._base_shared_step(X, targets)
 
-    def training_step(self, batch: List[Any], batch_idx: int) -> Dict[str, Any]:
+    def training_step(self, batch: List[Any], batch_idx: int,id: int) -> Dict[str, Any]:
         """Training step for pytorch lightning. It does all the shared operations, such as
         forwarding the crops, computing logits and computing statistics.
 
@@ -500,6 +500,18 @@ class BaseMethod(pl.LightningModule):
         _, X, targets = batch
 
         X = [X] if isinstance(X, torch.Tensor) else X
+        print(len(X),type(X))
+        if id==0:
+            X[0],X[1] = X[0][:,:,0:16,0:16],X[1][:,:,0:16,0:16]
+        elif id==1:
+            X[0],X[1] = X[0][:,:,0:16,16:32],X[1][:,:,0:16,16:32]
+        elif id==2:
+            X[0],X[1] = X[0][:,:,16:32,0:16],X[1][:,:,16:32,0:16]
+        elif id==3:
+            X[0],X[1] = X[0][:,:,16:32,16:32],X[1][:,:,16:32,16:32]
+
+        print(X[0].shape)
+            
 
         # check that we received the desired number of crops
         assert len(X) == self.num_crops

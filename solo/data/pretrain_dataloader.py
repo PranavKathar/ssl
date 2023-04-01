@@ -132,7 +132,19 @@ class DWT3D:
         xH = np.log10(xh)*0.3
         xV = np.log10(xv)*0.3
         xD = np.log10(xd)*0.3
-        return xA, (xH, xV, xD)
+        X= np.zeros((a,b,c), dtype=np.float32)
+        X[:a//2, :a//2,:] = xA
+
+        # Insert the horizontal detail coefficients into the top right quadrant
+        X[:a//2, a//2:,:] = xH
+
+        # Insert the vertical detail coefficients into the bottom left quadrant
+        X[a//2:, :a//2,:] = xV
+
+        # Insert the diagonal detail coefficients into the bottom right quadrant
+        X[a//2:, a//2:,:] = xD
+        return X
+        # return xA
 
 class Solarization:
     """Solarization as a callable object."""
