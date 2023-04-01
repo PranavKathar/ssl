@@ -144,6 +144,31 @@ class SimCLR(BaseMethod):
             temperature=self.temperature,
         )
 
+        approx_loss = simclr_loss_func(
+            a,
+            indexes=indexes_approx,
+            temperature=self.temperature,
+        )
+
+        hzt_loss = simclr_loss_func(
+            hzt,
+            indexes=indexes_hzt,
+            temperature=self.temperature,
+        )
+
+        ver_loss = simclr_loss_func(
+            ver,
+            indexes=indexes_ver,
+            temperature=self.temperature,
+        )
+
+        dia_loss = simclr_loss_func(
+            dia,
+            indexes=indexes_dia,
+            temperature=self.temperature,
+        )
+
+
         self.log("train_nce_loss", nce_loss, on_epoch=True, sync_dist=True)
 
-        return nce_loss + class_loss
+        return nce_loss + class_loss +

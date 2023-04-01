@@ -124,12 +124,15 @@ class DWT3D:
         xd = np.zeros(shape, dtype=np.float32)
 
         xa[:,:,0] = xaR; xa[:,:,1] = xaG; xa[:,:,2] = xaB
-        # xh[:,:,0] = xhR; xh[:,:,1] = xhG; xh[:,:,2] = xhB
-        # xv[:,:,0] = xvR; xv[:,:,1] = xvG; xv[:,:,2] = xvB
-        # xd[:,:,0] = xdR; xd[:,:,1] = xdG; xd[:,:,2] = xdB
+        xh[:,:,0] = xhR; xh[:,:,1] = xhG; xh[:,:,2] = xhB
+        xv[:,:,0] = xvR; xv[:,:,1] = xvG; xv[:,:,2] = xvB
+        xd[:,:,0] = xdR; xd[:,:,1] = xdG; xd[:,:,2] = xdB
         xA = xa/255
         xA = xA*0.3
-        return xA
+        xH = np.log10(xh)*0.3
+        xV = np.log10(xv)*0.3
+        xD = np.log10(xd)*0.3
+        return xA, (xH, xV, xD)
 
 class Solarization:
     """Solarization as a callable object."""
