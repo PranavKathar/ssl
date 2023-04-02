@@ -459,13 +459,27 @@ class BaseMethod(pl.LightningModule):
         """
 
         out = self(X)
+        # out_a = self(X[0])
+        # out_h = self(X[1])
+        # out_v = self(X[2])
+        # out_d = self(X[3])
         logits = out["logits"]
+        # logits_a = out_a["logits"]
+        # logits_h = out_h["logits"]
+        # logits_v = out_v["logits"]
+        # logits_d = out_d["logits"]
 
         loss = F.cross_entropy(logits, targets, ignore_index=-1)
+        # loss_a = F.cross_entropy(logits_a, targets, ignore_index=-1)
+        # loss_h = F.cross_entropy(logits_h, targets, ignore_index=-1)
+        # loss_v = F.cross_entropy(logits_v, targets, ignore_index=-1)
+        # loss_d = F.cross_entropy(logits_d, targets, ignore_index=-1)
         # handle when the number of classes is smaller than 5
         top_k_max = min(5, logits.size(1))
         acc1, acc5 = accuracy_at_k(logits, targets, top_k=(1, top_k_max))
-
+        # acc1, acc5 = 1,1
+        # loss = loss_a + loss_h + loss_v + loss_d
+        # out = {}
         out.update({"loss": loss, "acc1": acc1, "acc5": acc5})
         return out
 
@@ -484,7 +498,7 @@ class BaseMethod(pl.LightningModule):
 
         return self._base_shared_step(X, targets)
 
-    def training_step(self, batch: List[Any], batch_idx: int,id: int) -> Dict[str, Any]:
+    def training_step(self, batch: List[Any], batch_idx: int) -> Dict[str, Any]:
         """Training step for pytorch lightning. It does all the shared operations, such as
         forwarding the crops, computing logits and computing statistics.
 
@@ -496,26 +510,26 @@ class BaseMethod(pl.LightningModule):
         Returns:
             Dict[str, Any]: dict with the classification loss, features and logits.
         """
-
+        # targets = batch[0][2]
         _, X, targets = batch
 
         X = [X] if isinstance(X, torch.Tensor) else X
-        print(len(X),type(X))
-        if id==0:
-            X[0],X[1] = X[0][:,:,0:16,0:16],X[1][:,:,0:16,0:16]
-        elif id==1:
-            X[0],X[1] = X[0][:,:,0:16,16:32],X[1][:,:,0:16,16:32]
-        elif id==2:
-            X[0],X[1] = X[0][:,:,16:32,0:16],X[1][:,:,16:32,0:16]
-        elif id==3:
-            X[0],X[1] = X[0][:,:,16:32,16:32],X[1][:,:,16:32,16:32]
+        # X = [batch[0][1],batch[1][1],batch[2][1],batch[3][1]]
+        # print(len(X),type(X))
+        # if id==0:
+        #     X[0],X[1] = X[0][:,:,0:16,0:16],X[1][:,:,0:16,0:16]
+        # elif id==1:
+        #     X[0],X[1] = X[0][:,:,0:16,16:32],X[1][:,:,0:16,16:32]
+        # elif id==2:
+        #     X[0],X[1] = X[0][:,:,16:32,0:16],X[1][:,:,16:32,0:16]
+        # elif id==3:
+        #     X[0],X[1] = X[0][:,:,16:32,16:32],X[1][:,:,16:32,16:32]
 
-        print(X[0].shape)
+        # print(X[0].shape)
             
 
         # check that we received the desired number of crops
         assert len(X) == self.num_crops
-
         outs = [self.base_training_step(x, targets) for x in X[: self.num_large_crops]]
         outs = {k: [out[k] for out in outs] for k in outs[0].keys()}
 
@@ -528,7 +542,7 @@ class BaseMethod(pl.LightningModule):
         outs["loss"] = sum(outs["loss"]) / self.num_large_crops
         outs["acc1"] = sum(outs["acc1"]) / self.num_large_crops
         outs["acc5"] = sum(outs["acc5"]) / self.num_large_crops
-
+        # outs["loss_a"] = (outs["loss"][0]+outs["loss"][1]) / self.num_large_crops
         metrics = {
             "train_class_loss": outs["loss"],
             "train_acc1": outs["acc1"],

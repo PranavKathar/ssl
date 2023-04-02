@@ -18,14 +18,15 @@
 # DEALINGS IN THE SOFTWARE.
 
 from typing import Any, Dict, List, Sequence
-
+import matplotlib.pyplot as plt
 import omegaconf
 import torch
 import torch.nn as nn
 from solo.losses.simclr import simclr_loss_func
 from solo.methods.base import BaseMethod
 # from pytorch_wavelets import DTCWTForward, DTCWTInverse
-
+# from solo.data.pretrain_dataloader import DWT3D
+from pytorch_wavelets import DWTForward
 
 
 class SimCLR(BaseMethod):
@@ -129,27 +130,79 @@ class SimCLR(BaseMethod):
         """
 
         indexes = batch[0]
+        # X = batch[1]
+        # Y = batch[2]
         
-        # print("HERE",batch[1][1].shape)
-        # print("HERE2",batch_idx)
-        # print("HERE",batch[2].shape)
-        # print("HERE3",indexes.shape) 
-        out_a = super().training_step(batch.copy(), batch_idx,0)
-        out_h = super().training_step(batch.copy(), batch_idx,1)
-        out_v = super().training_step(batch.copy(), batch_idx,2)
-        out_d = super().training_step(batch.copy(), batch_idx,3)
-        # class_loss = out["loss"]
+        xfm = DWTForward(J=1, mode='symmetric', wave='db1').to(self.device)
+
+        Y1, Y2 , Y3, Y4, Y5, Y6, Y7, Y8 = xfm(batch[1][0]), xfm(batch[1][1]), xfm(batch[1][2]), xfm(batch[1][3]), xfm(batch[1][4]), xfm(batch[1][5]), xfm(batch[1][6]), xfm(batch[1][7])
+        # print(Y1[0].shape)
+        # print(Y2[0].shape)
+        # print(Y3[1][0][:,:,0].shape)
+        # print(Y4[1][0][:,:,0].shape)
+        # print(Y5[1][0][:,:,1].shape)
+        # print(Y6[1][0][:,:,1].shape)
+        # print(Y7[1][0][:,:,2].shape)
+        # print(Y8[1][0][:,:,2].shape)
+        # m = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+        # a = m(Y1[0])
+        # b = m(Y2[0])
+        # c = m(Y3[1][0][:,:,0])
+        # d = m(Y4[1][0][:,:,0])
+        # e = m(Y5[1][0][:,:,1])
+        # f = m(Y6[1][0][:,:,1])
+        # g = m(Y7[1][0][:,:,2])
+        # h = m(Y8[1][0][:,:,2])
+        # print(a.shape)
+        # print(b.shape)  
+        # print(c.shape)
+        # print(d.shape)
+        # print(e.shape)
+        # print(f.shape)
+        # print(g.shape)
+        # print(h.shape)
+       
+        # mod_batch_a = [batch[0],[Y1[0],Y2[0]],batch[2]]
+        # mod_batch_h = [batch[0],[Y1[1][0][:,:,0],Y2[1][0][:,:,0]],batch[2]]
+        # mod_batch_v = [batch[0],[Y1[1][0][:,:,1],Y2[1][0][:,:,1]],batch[2]]
+        # mod_batch_d = [batch[0],[Y1[1][0][:,:,2],Y2[1][0][:,:,2]],batch[2]]
+    
+        # mod_batch_a = [batch[0],[Y1[0],Y2[0]],batch[2]]
+        # mod_batch_h = [batch[0],[Y3[1][0][:,:,0],Y4[1][0][:,:,0]],batch[2]]
+        # mod_batch_v = [batch[0],[Y5[1][0][:,:,1],Y6[1][0][:,:,1]],batch[2]]
+        # mod_batch_d = [batch[0],[Y7[1][0][:,:,2],Y8[1][0][:,:,2]],batch[2]]
+
+        batch = [batch[0],[Y1[0],Y2[0],Y3[1][0][:,:,0],Y4[1][0][:,:,0],Y5[1][0][:,:,1],Y6[1][0][:,:,1],Y7[1][0][:,:,2],Y8[1][0][:,:,2]],batch[2]]
+        # mod_batch_a = [batch[0],[a,b],batch[2]]
+        # mod_batch_h = [batch[0],[c,d],batch[2]]
+        # mod_batch_v = [batch[0],[e,f],batch[2]]
+        # mod_batch_d = [batch[0],[g,h],batch[2]]
+
+        out = super().training_step(batch, batch_idx)        
+        # out_a = super().training_step(mod_batch_a, batch_idx)
+        # out_h = super().training_step(mod_batch_h, batch_idx)
+        # out_v = super().training_step(mod_batch_v, batch_idx)
+        # out_d = super().training_step(mod_batch_d, batch_idx)
+
+        class_loss = out["loss"]
         # print("LOSS",len(out["z"]))
+        # z = out["z"]
+        z_a = torch.cat((out["z"][0],out["z"][1]))
+        z_h = torch.cat((out["z"][2],out["z"][3]))
+        z_v = torch.cat((out["z"][4],out["z"][5]))
+        z_d = torch.cat((out["z"][6],out["z"][7]))
         # z = torch.cat(out["z"])
         # print("LOSS1",z.shape)
-        z_a = torch.cat(out_a["z"])
-        z_h = torch.cat(out_h["z"])
-        z_v = torch.cat(out_v["z"])
-        z_d = torch.cat(out_d["z"])
+        # z_a = torch.cat(out_a["z"])
+        # print(z_a.shape)
+        # z_h = torch.cat(out_h["z"])
+        # z_v = torch.cat(out_v["z"])
+        # z_d = torch.cat(out_d["z"])
 
         # ------- contrastive loss -------
         n_augs = self.num_large_crops + self.num_small_crops
-        indexes = indexes.repeat(n_augs)
+        # indexes = indexes.repeat(n_augs)
+        indexes = indexes.repeat(2)
 
         # nce_loss = simclr_loss_func(
         #     z,
@@ -182,8 +235,8 @@ class SimCLR(BaseMethod):
         )
 
         total = approx_loss + hzt_loss + ver_loss + dia_loss
+        final = total + class_loss
         # self.log("train_nce_loss", nce_loss, on_epoch=True, sync_dist=True)
-        self.log("train_total_loss", total, on_epoch=True, sync_dist=True)
+        self.log("train_final_loss", final, on_epoch=True, sync_dist=True)
 
-        # return nce_loss + class_loss
-        return total
+        return final

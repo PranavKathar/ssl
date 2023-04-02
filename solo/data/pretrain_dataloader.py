@@ -133,6 +133,9 @@ class DWT3D:
         xV = np.log10(xv)*0.3
         xD = np.log10(xd)*0.3
         X= np.zeros((a,b,c), dtype=np.float32)
+
+        # Insert the approximate detail coefficients into the top right quadrant
+
         X[:a//2, :a//2,:] = xA
 
         # Insert the horizontal detail coefficients into the top right quadrant
@@ -307,12 +310,12 @@ def build_transform_pipeline(dataset, cfg):
     if cfg.horizontal_flip.prob:
         augmentations.append(transforms.RandomHorizontalFlip(p=cfg.horizontal_flip.prob))
 
-    if cfg.dwt.enabled:
-        augmentations.append(
-            transforms.Compose(
-                [DWT3D()]
-            ),
-        )
+    # if cfg.dwt.enabled:
+    #     augmentations.append(
+    #         transforms.Compose(
+    #             [DWT3D()]
+    #         ),
+    #     )
 
     augmentations.append(transforms.ToTensor())
     augmentations.append(transforms.Normalize(mean=mean, std=std))
