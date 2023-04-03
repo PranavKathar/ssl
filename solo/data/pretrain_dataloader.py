@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Callable, List, Optional, Sequence, Type, Union
 import pywt
 import numpy as np
-
+import matplotlib.pyplot as plt
 import torch
 import torchvision
 from PIL import Image, ImageFilter, ImageOps
@@ -104,50 +104,50 @@ class GaussianBlur:
         img = img.filter(ImageFilter.GaussianBlur(radius=sigma))
         return img
 
-class DWT3D:
-    def __init__(self, wavelet='haar'):
-        self.wavelet = wavelet
-    def __call__(self, img: Image) -> Image:
-        img = np.array(img)
-        a,b,c= img.shape
-        # print(a,b,c)
-        #channel-wise DWT
-        xaR, (xhR, xvR, xdR) = pywt.dwt2(img[:,:,0], self.wavelet)
-        xaB, (xhB, xvB, xdB) = pywt.dwt2(img[:,:,2], self.wavelet)
-        xaG, (xhG, xvG, xdG) = pywt.dwt2(img[:,:,1], self.wavelet)
+# class DWT3D:
+#     def __init__(self, wavelet='haar'):
+#         self.wavelet = wavelet
+#     def __call__(self, img: Image) -> Image:
+#         img = np.array(img)
+#         a,b,c= img.shape
+#         # print(a,b,c)
+#         #channel-wise DWT
+#         xaR, (xhR, xvR, xdR) = pywt.dwt2(img[:,:,0], self.wavelet)
+#         xaB, (xhB, xvB, xdB) = pywt.dwt2(img[:,:,2], self.wavelet)
+#         xaG, (xhG, xvG, xdG) = pywt.dwt2(img[:,:,1], self.wavelet)
 
-        shape=(a//2,a//2,c)
-        #xa, (xh, xv, xd) these are the four components of the DWT of the color image
-        xa = np.zeros(shape, dtype=np.float32)
-        xh = np.zeros(shape, dtype=np.float32)
-        xv = np.zeros(shape, dtype=np.float32)
-        xd = np.zeros(shape, dtype=np.float32)
+#         shape=(a//2,a//2,c)
+#         #xa, (xh, xv, xd) these are the four components of the DWT of the color image
+#         xa = np.zeros(shape, dtype=np.float32)
+#         xh = np.zeros(shape, dtype=np.float32)
+#         xv = np.zeros(shape, dtype=np.float32)
+#         xd = np.zeros(shape, dtype=np.float32)
 
-        xa[:,:,0] = xaR; xa[:,:,1] = xaG; xa[:,:,2] = xaB
-        xh[:,:,0] = xhR; xh[:,:,1] = xhG; xh[:,:,2] = xhB
-        xv[:,:,0] = xvR; xv[:,:,1] = xvG; xv[:,:,2] = xvB
-        xd[:,:,0] = xdR; xd[:,:,1] = xdG; xd[:,:,2] = xdB
-        xA = xa/255
-        xA = xA*0.3
-        xH = np.log10(xh)*0.3
-        xV = np.log10(xv)*0.3
-        xD = np.log10(xd)*0.3
-        X= np.zeros((a,b,c), dtype=np.float32)
+#         xa[:,:,0] = xaR; xa[:,:,1] = xaG; xa[:,:,2] = xaB
+#         xh[:,:,0] = xhR; xh[:,:,1] = xhG; xh[:,:,2] = xhB
+#         xv[:,:,0] = xvR; xv[:,:,1] = xvG; xv[:,:,2] = xvB
+#         xd[:,:,0] = xdR; xd[:,:,1] = xdG; xd[:,:,2] = xdB
+#         xA = xa/255
+#         xA = xA*0.3
+#         xH = np.log10(xh)*0.3
+#         xV = np.log10(xv)*0.3
+#         xD = np.log10(xd)*0.3
+#         X= np.zeros((a,b,c), dtype=np.float32)
 
-        # Insert the approximate detail coefficients into the top right quadrant
+#         # Insert the approximate detail coefficients into the top right quadrant
 
-        X[:a//2, :a//2,:] = xA
+#         X[:a//2, :a//2,:] = xA
 
-        # Insert the horizontal detail coefficients into the top right quadrant
-        X[:a//2, a//2:,:] = xH
+#         # Insert the horizontal detail coefficients into the top right quadrant
+#         X[:a//2, a//2:,:] = xH
 
-        # Insert the vertical detail coefficients into the bottom left quadrant
-        X[a//2:, :a//2,:] = xV
+#         # Insert the vertical detail coefficients into the bottom left quadrant
+#         X[a//2:, :a//2,:] = xV
 
-        # Insert the diagonal detail coefficients into the bottom right quadrant
-        X[a//2:, a//2:,:] = xD
-        return X
-        # return xA
+#         # Insert the diagonal detail coefficients into the bottom right quadrant
+#         X[a//2:, a//2:,:] = xD
+#         return X
+#         # return xA
 
 class Solarization:
     """Solarization as a callable object."""
