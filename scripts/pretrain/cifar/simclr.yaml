@@ -43,10 +43,10 @@ checkpoint:
   frequency: 1
 auto_resume:
   enabled: False
-# knn_eval:
-#   enabled: True
-#   k: 20
-#   distance_func: "euclidean"
+knn_eval:
+  enabled: False
+  k: 20
+  distance_func: "euclidean"
 
 # overwrite PL stuff
 max_epochs: 1000

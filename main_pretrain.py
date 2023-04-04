@@ -256,7 +256,6 @@ def main(cfg: DictConfig):
         }
     )
     trainer = Trainer(**trainer_kwargs)
-
     # fix for incompatibility with nvidia-dali and pytorch lightning
     # with dali 1.15 (this will be fixed on 1.16)
     # https://github.com/Lightning-AI/lightning/issues/12956

@@ -130,10 +130,11 @@ class SimCLR(BaseMethod):
         """
         
         indexes = batch[0]
+        X = batch[1]
         xfm = DWTForward(J=1, mode='symmetric', wave='db1').to(self.device)
         Y1, Y2  = xfm(batch[1][0]), xfm(batch[1][1])
         m = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
-        a = [m(Y1[0]),m(Y2[0]),m(Y1[1][0][:,:,0]),m(Y2[1][0][:,:,0]),m(Y1[1][0][:,:,1]),m(Y2[1][0][:,:,1]),m(Y1[1][0][:,:,2]),m(Y2[1][0][:,:,2])]
+        a = [X[0],X[1],m(Y1[0]),m(Y2[0]),m(Y1[1][0][:,:,0]),m(Y2[1][0][:,:,0]),m(Y1[1][0][:,:,1]),m(Y2[1][0][:,:,1]),m(Y1[1][0][:,:,2]),m(Y2[1][0][:,:,2])]
         batch = [batch[0],a,batch[2]]
         
         # fig = plt.figure(figsize=(4, 2))
@@ -186,11 +187,11 @@ class SimCLR(BaseMethod):
         out = super().training_step(batch, batch_idx)       
         class_loss = out["loss"]
         # z = out["z"]
-        z_a = torch.cat((out["z"][0],out["z"][1]))
-        z_h = torch.cat((out["z"][2],out["z"][3]))
-        z_v = torch.cat((out["z"][4],out["z"][5]))
-        z_d = torch.cat((out["z"][6],out["z"][7]))
-        # z = torch.cat(out["z"])
+        z_da = torch.cat((out["z"][0],out["z"][1]))
+        z_a = torch.cat((out["z"][2],out["z"][3]))
+        z_h = torch.cat((out["z"][4],out["z"][5]))
+        z_v = torch.cat((out["z"][6],out["z"][7]))
+        z_d = torch.cat((out["z"][8],out["z"][9]))
         # print("LOSS1",z.shape)
 
         # ------- contrastive loss -------
@@ -198,11 +199,11 @@ class SimCLR(BaseMethod):
         # indexes = indexes.repeat(n_augs)
         indexes = indexes.repeat(2)
 
-        # nce_loss = simclr_loss_func(
-        #     z,
-        #     indexes=indexes,
-        #     temperature=self.temperature,
-        # )
+        nce_loss = simclr_loss_func(
+            z_da,
+            indexes=indexes,
+            temperature=self.temperature,
+        )
 
         approx_loss = simclr_loss_func(
             z_a,
@@ -229,14 +230,15 @@ class SimCLR(BaseMethod):
         )
 
         total = approx_loss + hzt_loss + ver_loss + dia_loss
-        final = total + class_loss
-        # self.log("train_nce_loss", nce_loss, on_epoch=True, sync_dist=True)
-        self.log("train_final_loss", final, on_epoch=True, sync_dist=True)
+        final = total/4 + class_loss + nce_loss
+        self.log("train_nce_loss", nce_loss, on_epoch=True, sync_dist=True)
         self.log("train_class_loss", class_loss, on_epoch=True, sync_dist=True)
         self.log("Approx_comp_loss", approx_loss, on_epoch=True, sync_dist=True)
         self.log("Horizontal_comp_loss", hzt_loss, on_epoch=True, sync_dist=True)
         self.log("Vertical_comp_loss",ver_loss, on_epoch=True, sync_dist=True)
         self.log("Diagonal_comp_loss", dia_loss, on_epoch=True, sync_dist=True)
         self.log("Total_comp_loss", total, on_epoch=True, sync_dist=True)
+        self.log("Total/4_comp_loss", total/4, on_epoch=True, sync_dist=True)
+        self.log("train_final_loss", final, on_epoch=True, sync_dist=True)
 
         return final

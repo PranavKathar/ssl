@@ -252,7 +252,8 @@ class BaseMethod(pl.LightningModule):
         self.knn_eval: bool = cfg.knn_eval.enabled
         self.knn_k: int = cfg.knn_eval.k
         if self.knn_eval:
-            self.knn = WeightedKNNClassifier(k=self.knn_k, distance_fx=cfg.knn.distance_func)
+            # self.knn = WeightedKNNClassifier(k=self.knn_k, distance_fx=cfg.knn.distance_func)
+            self.knn = WeightedKNNClassifier(k=20, distance_fx="euclidean")
 
         # for performance
         self.no_channel_last = cfg.performance.disable_channel_last
@@ -514,9 +515,11 @@ class BaseMethod(pl.LightningModule):
         # check that we received the desired number of crops
         # assert len(X) == self.num_crops
         # outs = [self.base_training_step(x, targets) for x in X[: self.num_large_crops]]
-        outs = [self.base_training_step(x, targets) for x in X[: self.num_large_crops*4]]
+        self.num_large_crops = 2
+        self.num_small_crops = 8
+        outs = [self.base_training_step(x, targets) for x in X[: self.num_large_crops]]
         outs = {k: [out[k] for out in outs] for k in outs[0].keys()}
-
+        self.multicrop=True
         if self.multicrop:
             multicrop_outs = [self.multicrop_forward(x) for x in X[self.num_large_crops :]]
             for k in multicrop_outs[0].keys():
@@ -524,9 +527,9 @@ class BaseMethod(pl.LightningModule):
 
         # loss and stats
         #Here just remove *4 to retain originality
-        outs["loss"] = sum(outs["loss"]) / (self.num_large_crops*4)
-        outs["acc1"] = sum(outs["acc1"]) / (self.num_large_crops*4)
-        outs["acc5"] = sum(outs["acc5"]) / (self.num_large_crops*4)
+        outs["loss"] = sum(outs["loss"]) / (self.num_large_crops)
+        outs["acc1"] = sum(outs["acc1"]) / (self.num_large_crops)
+        outs["acc5"] = sum(outs["acc5"]) / (self.num_large_crops)
         # outs["loss_a"] = (outs["loss"][0]+outs["loss"][1]) / self.num_large_crops
         metrics = {
             "train_class_loss": outs["loss"],
@@ -539,6 +542,7 @@ class BaseMethod(pl.LightningModule):
         if self.knn_eval:
             targets = targets.repeat(self.num_large_crops)
             mask = targets != -1
+            print("HERE",outs["feats"][0].shape,len(outs["feats"]),torch.cat(outs["feats"][: self.num_large_crops])[mask].detach().shape)
             self.knn(
                 train_features=torch.cat(outs["feats"][: self.num_large_crops])[mask].detach(),
                 train_targets=targets[mask],
@@ -584,6 +588,9 @@ class BaseMethod(pl.LightningModule):
         if self.knn_eval and not self.trainer.sanity_checking:
             self.knn(test_features=out.pop("feats").detach(), test_targets=targets.detach())
 
+        # if self.knn_eval and not self.trainer.sanity_checking:
+        #     self.knn(test_features=out.pop("feats").detach(), test_targets=targets.detach())
+
         metrics = {
             "batch_size": batch_size,
             "val_loss": out["loss"],
@@ -606,10 +613,13 @@ class BaseMethod(pl.LightningModule):
         val_acc5 = weighted_mean(outs, "val_acc5", "batch_size")
 
         log = {"val_loss": val_loss, "val_acc1": val_acc1, "val_acc5": val_acc5}
-
         if self.knn_eval and not self.trainer.sanity_checking:
             val_knn_acc1, val_knn_acc5 = self.knn.compute()
             log.update({"val_knn_acc1": val_knn_acc1, "val_knn_acc5": val_knn_acc5})
+
+        # if self.knn_eval and not self.trainer.sanity_checking:
+        #     val_knn_acc1, val_knn_acc5 = self.knn.compute()
+        #     log.update({"val_knn_acc1": val_knn_acc1, "val_knn_acc5": val_knn_acc5})
 
         self.log_dict(log, sync_dist=True)
 
