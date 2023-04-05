@@ -228,9 +228,9 @@ class SimCLR(BaseMethod):
             indexes=indexes,
             temperature=self.temperature,
         )
-
+        l = 1
         total = approx_loss + hzt_loss + ver_loss + dia_loss
-        final = total/4 + class_loss + nce_loss
+        final = total*l + nce_loss
         self.log("train_nce_loss", nce_loss, on_epoch=True, sync_dist=True)
         self.log("train_class_loss", class_loss, on_epoch=True, sync_dist=True)
         self.log("Approx_comp_loss", approx_loss, on_epoch=True, sync_dist=True)
@@ -239,6 +239,9 @@ class SimCLR(BaseMethod):
         self.log("Diagonal_comp_loss", dia_loss, on_epoch=True, sync_dist=True)
         self.log("Total_comp_loss", total, on_epoch=True, sync_dist=True)
         self.log("Total/4_comp_loss", total/4, on_epoch=True, sync_dist=True)
+        self.log("Total*lambda_comp_loss", total*l, on_epoch=True, sync_dist=True)
         self.log("train_final_loss", final, on_epoch=True, sync_dist=True)
+        self.log("train_final/5_loss", final/5, on_epoch=True, sync_dist=True)
+        self.log("final/5+class_loss", final/5 + class_loss, on_epoch=True, sync_dist=True)
 
-        return final
+        return final/5 + class_loss

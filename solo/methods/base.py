@@ -251,9 +251,11 @@ class BaseMethod(pl.LightningModule):
         # knn online evaluation
         self.knn_eval: bool = cfg.knn_eval.enabled
         self.knn_k: int = cfg.knn_eval.k
+        self.knn_dist = cfg.knn_eval.distance
         if self.knn_eval:
             # self.knn = WeightedKNNClassifier(k=self.knn_k, distance_fx=cfg.knn.distance_func)
-            self.knn = WeightedKNNClassifier(k=20, distance_fx="euclidean")
+            self.knn = WeightedKNNClassifier(k=self.knn_k, distance_fx=self.knn_dist)
+            # self.knn = WeightedKNNClassifier(k=20, distance_fx="euclidean")
 
         # for performance
         self.no_channel_last = cfg.performance.disable_channel_last
@@ -542,8 +544,7 @@ class BaseMethod(pl.LightningModule):
         if self.knn_eval:
             targets = targets.repeat(self.num_large_crops)
             mask = targets != -1
-            print("HERE",outs["feats"][0].shape,len(outs["feats"]),torch.cat(outs["feats"][: self.num_large_crops])[mask].detach().shape)
-            self.knn(
+            self.knn.update(
                 train_features=torch.cat(outs["feats"][: self.num_large_crops])[mask].detach(),
                 train_targets=targets[mask],
             )
@@ -586,7 +587,7 @@ class BaseMethod(pl.LightningModule):
 
         out = self.base_validation_step(X, targets)
         if self.knn_eval and not self.trainer.sanity_checking:
-            self.knn(test_features=out.pop("feats").detach(), test_targets=targets.detach())
+            self.knn.update(test_features=out.pop("feats").detach(), test_targets=targets.detach())
 
         # if self.knn_eval and not self.trainer.sanity_checking:
         #     self.knn(test_features=out.pop("feats").detach(), test_targets=targets.detach())

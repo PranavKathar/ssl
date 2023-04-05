@@ -79,19 +79,16 @@ class WeightedKNNClassifier(Metric):
             test_features (torch.Tensor, optional): a batch of test features. Defaults to None.
             test_targets (torch.Tensor, optional): a batch of test targets. Defaults to None.
         """
-        print(train_features.shape)
-        print("HERE",test_features)
+        # print("HERE",train_features,train_targets,test_features,test_targets)
         assert (train_features is None) == (train_targets is None)
         assert (test_features is None) == (test_targets is None)
 
         if train_features is not None:
-            print("CHECKING1")
             assert train_features.size(0) == train_targets.size(0)
             self.train_features.append(train_features.detach())
             self.train_targets.append(train_targets.detach())
 
         if test_features is not None:
-            print("CHECKING2")
             assert test_features.size(0) == test_targets.size(0)
             self.test_features.append(test_features.detach())
             self.test_targets.append(test_targets.detach())
