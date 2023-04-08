@@ -128,13 +128,21 @@ class SimCLR(BaseMethod):
         Returns:
             torch.Tensor: total loss composed of SimCLR loss and classification loss.
         """
-        
+        # custom_transforms = [torchvision.transforms.Normalize(mean=(0.4914, 0.4822, 0.4465), std=(0.2470, 0.2435, 0.2616))]
+        # trans = torchvision.transforms.Compose(custom_transforms)
         indexes = batch[0]
         X = batch[1]
-        xfm = DWTForward(J=1, mode='symmetric', wave='db1').to(self.device)
+        xfm = DWTForward(J=1, mode='symmetric', wave='haar').to(self.device)
         Y1, Y2  = xfm(batch[1][0]), xfm(batch[1][1])
-        m = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
-        a = [X[0],X[1],m(Y1[0]),m(Y2[0]),m(Y1[1][0][:,:,0]),m(Y2[1][0][:,:,0]),m(Y1[1][0][:,:,1]),m(Y2[1][0][:,:,1]),m(Y1[1][0][:,:,2]),m(Y2[1][0][:,:,2])]
+        # print(type(Y1))
+        # Y1[0] = trans(Y1[0])
+        # Y2[0] = trans(Y2[0])
+        # Y1[1][0] = trans(Y1[1][0])
+        # Y2[1][0] = trans(Y2[1][0])
+        # m = nn.Upsample(scale_factor=2, mode='nearest')
+        a = [X[0],X[1],Y1[0],Y2[0],Y1[1][0][:,:,0],Y2[1][0][:,:,0],Y1[1][0][:,:,1],Y2[1][0][:,:,1],Y1[1][0][:,:,2],Y2[1][0][:,:,2]]
+        # a = [X[0],X[1],m(Y1[0]),m(Y2[0]),m(Y1[1][0][:,:,0]),m(Y2[1][0][:,:,0]),m(Y1[1][0][:,:,1]),m(Y2[1][0][:,:,1]),m(Y1[1][0][:,:,2]),m(Y2[1][0][:,:,2])]
+        # a = [X[0],X[1],trans(Y1[0]),trans(Y2[0]),trans(Y1[1][0][:,:,0]),trans(Y2[1][0][:,:,0]),trans(Y1[1][0][:,:,1]),trans(Y2[1][0][:,:,1]),trans(Y1[1][0][:,:,2]),trans(Y2[1][0][:,:,2])]
         batch = [batch[0],a,batch[2]]
         
         # fig = plt.figure(figsize=(4, 2))
@@ -230,7 +238,9 @@ class SimCLR(BaseMethod):
         )
         l = 1
         total = approx_loss + hzt_loss + ver_loss + dia_loss
+        total_avg = total/4
         final = total*l + nce_loss
+        avg = final/5
         self.log("train_nce_loss", nce_loss, on_epoch=True, sync_dist=True)
         self.log("train_class_loss", class_loss, on_epoch=True, sync_dist=True)
         self.log("Approx_comp_loss", approx_loss, on_epoch=True, sync_dist=True)
@@ -238,10 +248,33 @@ class SimCLR(BaseMethod):
         self.log("Vertical_comp_loss",ver_loss, on_epoch=True, sync_dist=True)
         self.log("Diagonal_comp_loss", dia_loss, on_epoch=True, sync_dist=True)
         self.log("Total_comp_loss", total, on_epoch=True, sync_dist=True)
-        self.log("Total/4_comp_loss", total/4, on_epoch=True, sync_dist=True)
+        self.log("Total/4_comp_loss", total_avg, on_epoch=True, sync_dist=True)
         self.log("Total*lambda_comp_loss", total*l, on_epoch=True, sync_dist=True)
         self.log("train_final_loss", final, on_epoch=True, sync_dist=True)
-        self.log("train_final/5_loss", final/5, on_epoch=True, sync_dist=True)
-        self.log("final/5+class_loss", final/5 + class_loss, on_epoch=True, sync_dist=True)
+        self.log("train_final/5_loss", avg, on_epoch=True, sync_dist=True)
+        self.log("final/5+class_loss", avg + class_loss, on_epoch=True, sync_dist=True)
 
-        return final/5 + class_loss
+        return avg + class_loss
+    
+##########################ORIGINAL#####################################
+
+        # indexes = batch[0]
+
+        # out = super().training_step(batch, batch_idx)
+        # class_loss = out["loss"]
+        # z = torch.cat(out["z"])
+
+        # # ------- contrastive loss -------
+        # n_augs = self.num_large_crops + self.num_small_crops
+        # indexes = indexes.repeat(n_augs)
+
+        # nce_loss = simclr_loss_func(
+        #     z,
+        #     indexes=indexes,
+        #     temperature=self.temperature,
+        # )
+
+        # self.log("train_nce_loss", nce_loss, on_epoch=True, sync_dist=True)
+
+        # return nce_loss + class_loss
+

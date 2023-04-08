@@ -154,34 +154,6 @@ def main(cfg: DictConfig):
         train_loader = prepare_dataloader(
             train_dataset, batch_size=cfg.optimizer.batch_size, num_workers=cfg.data.num_workers
         )
-# ###################THIS CODE PRANAV HAS ADDED ##########################       
-#         print(train_loader.shape)
-#         print(train_dataset.shape)
-#     # here we want to save randomly pair of original and augmented images
-#     # to check if the augmentations are correct
-#     if cfg.debug_augmentations:
-#         #do it randomly
-#         random.seed(42)
-#         # train_loader = random.sample(train_loader, 10)
-#         #create a folder to save images
-#         print("Saving debug augmentations...")
-#         for i, batch in enumerate(train_loader):
-#             torchvision.utils.save_image(
-#                 batch[0][:16],
-#                 f"debug_augmentations/{i}_original.png",
-#                 normalize=True,
-#                 range=(-1, 1),
-#             )
-#             torchvision.utils.save_image(
-#                 batch[1][:16],
-#                 f"debug_augmentations/{i}_augmented.png",
-#                 normalize=True,
-#                 range=(-1, 1),
-#             )
-#             if i == 0:
-#                 break
-# ###################THIS CODE PRANAV HAS ADDED ##########################       
-
     # 1.7 will deprecate resume_from_checkpoint, but for the moment
     # the argument is the same, but we need to pass it as ckpt_path to trainer.fit
     ckpt_path, wandb_run_id = None, None
