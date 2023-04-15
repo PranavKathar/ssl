@@ -128,22 +128,25 @@ class SimCLR(BaseMethod):
         Returns:
             torch.Tensor: total loss composed of SimCLR loss and classification loss.
         """
-        # custom_transforms = [torchvision.transforms.Normalize(mean=(0.4914, 0.4822, 0.4465), std=(0.2470, 0.2435, 0.2616))]
-        # trans = torchvision.transforms.Compose(custom_transforms)
+
         indexes = batch[0]
-        X = batch[1]
-        xfm = DWTForward(J=1, mode='symmetric', wave='haar').to(self.device)
-        Y1, Y2  = xfm(batch[1][0]), xfm(batch[1][1])
+        # print(len(batch[1]))
+        # X = batch[1]
+        # xfm = DWTForward(J=1, mode='symmetric', wave='haar').to(self.device)
+        # Y1, Y2  = xfm(batch[1][0]), xfm(batch[1][1])
         # print(type(Y1))
         # Y1[0] = trans(Y1[0])
         # Y2[0] = trans(Y2[0])
         # Y1[1][0] = trans(Y1[1][0])
         # Y2[1][0] = trans(Y2[1][0])
         # m = nn.Upsample(scale_factor=2, mode='nearest')
-        a = [X[0],X[1],Y1[0],Y2[0],Y1[1][0][:,:,0],Y2[1][0][:,:,0],Y1[1][0][:,:,1],Y2[1][0][:,:,1],Y1[1][0][:,:,2],Y2[1][0][:,:,2]]
         # a = [X[0],X[1],m(Y1[0]),m(Y2[0]),m(Y1[1][0][:,:,0]),m(Y2[1][0][:,:,0]),m(Y1[1][0][:,:,1]),m(Y2[1][0][:,:,1]),m(Y1[1][0][:,:,2]),m(Y2[1][0][:,:,2])]
-        # a = [X[0],X[1],trans(Y1[0]),trans(Y2[0]),trans(Y1[1][0][:,:,0]),trans(Y2[1][0][:,:,0]),trans(Y1[1][0][:,:,1]),trans(Y2[1][0][:,:,1]),trans(Y1[1][0][:,:,2]),trans(Y2[1][0][:,:,2])]
-        batch = [batch[0],a,batch[2]]
+
+        # a = [X[0],X[1],Y1[0],Y2[0],Y1[1][0][:,:,0],Y2[1][0][:,:,0],Y1[1][0][:,:,1],Y2[1][0][:,:,1],Y1[1][0][:,:,2],Y2[1][0][:,:,2]]
+        # custom_transforms = [torchvision.transforms.Normalize(mean=(0.4914, 0.4822, 0.4465), std=(0.2470, 0.2435, 0.2616))]
+        # trans = torchvision.transforms.Compose(custom_transforms)
+        # a = [trans(X[0]),trans(X[1]),trans(Y1[0]),trans(Y2[0]),trans(Y1[1][0][:,:,0]),trans(Y2[1][0][:,:,0]),trans(Y1[1][0][:,:,1]),trans(Y2[1][0][:,:,1]),trans(Y1[1][0][:,:,2]),trans(Y2[1][0][:,:,2])]
+        # batch = [batch[0],a,batch[2]]
         
         # fig = plt.figure(figsize=(4, 2))
         # ax1 = fig.add_subplot(2, 4, 1)
@@ -160,7 +163,7 @@ class SimCLR(BaseMethod):
         #     inv_trans = torchvision.transforms.Compose(custom_transforms)
         #     tensor = inv_trans(tensor)
         #     # img = mt(tensor)
-        #     img = torchvision.transforms.functional.convert_image_dtype(image= tensor,dtype=torch.uint8)
+        #     img = torchvision.transforms.functional.convert_image_dtype(image= tensor,dtype=torch.float64)
         #     return img.numpy().transpose((1,2,0))
         # print(convert_to_pil(a[0][0].cpu()).shape)
         # print(convert_to_pil(a[0][0].cpu()))
@@ -195,11 +198,17 @@ class SimCLR(BaseMethod):
         out = super().training_step(batch, batch_idx)       
         class_loss = out["loss"]
         # z = out["z"]
-        z_da = torch.cat((out["z"][0],out["z"][1]))
-        z_a = torch.cat((out["z"][2],out["z"][3]))
-        z_h = torch.cat((out["z"][4],out["z"][5]))
-        z_v = torch.cat((out["z"][6],out["z"][7]))
-        z_d = torch.cat((out["z"][8],out["z"][9]))
+        # z_da = torch.cat((out["z"][0],out["z"][1]))
+        # z_a = torch.cat((out["z"][2],out["z"][3]))
+        # z_h = torch.cat((out["z"][4],out["z"][5]))
+        # z_v = torch.cat((out["z"][6],out["z"][7]))
+        # z_d = torch.cat((out["z"][8],out["z"][9]))
+
+        z_a = torch.cat((out["z"][0],out["z"][1]))
+        z_h = torch.cat((out["z"][2],out["z"][3]))
+        z_v = torch.cat((out["z"][4],out["z"][5]))
+        z_d = torch.cat((out["z"][6],out["z"][7]))
+
         # print("LOSS1",z.shape)
 
         # ------- contrastive loss -------
@@ -207,11 +216,12 @@ class SimCLR(BaseMethod):
         # indexes = indexes.repeat(n_augs)
         indexes = indexes.repeat(2)
 
-        nce_loss = simclr_loss_func(
-            z_da,
-            indexes=indexes,
-            temperature=self.temperature,
-        )
+        # nce_loss = simclr_loss_func(
+        #     z_da,
+        #     indexes=indexes,
+        #     temperature=self.temperature,
+        # )
+        nce_loss = 0
 
         approx_loss = simclr_loss_func(
             z_a,
@@ -236,11 +246,12 @@ class SimCLR(BaseMethod):
             indexes=indexes,
             temperature=self.temperature,
         )
-        l = 1
+        l = 1 #lambda
         total = approx_loss + hzt_loss + ver_loss + dia_loss
         total_avg = total/4
         final = total*l + nce_loss
-        avg = final/5
+        # avg = final/5
+        avg = final/4
         self.log("train_nce_loss", nce_loss, on_epoch=True, sync_dist=True)
         self.log("train_class_loss", class_loss, on_epoch=True, sync_dist=True)
         self.log("Approx_comp_loss", approx_loss, on_epoch=True, sync_dist=True)

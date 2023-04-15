@@ -32,6 +32,8 @@ from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
 from torchvision import transforms
 from torchvision.datasets import STL10, ImageFolder
+from pytorch_wavelets import DWTForward
+from PIL import Image
 
 try:
     from solo.data.h5_dataset import H5Dataset
@@ -146,8 +148,16 @@ class NCropAugmentation:
         Returns:
             List[torch.Tensor]: an image in the tensor format.
         """
-
-        return [self.transform(x) for _ in range(self.num_crops)]
+        mt = torchvision.transforms.ToTensor()
+        M_t = torchvision.transforms.ToPILImage()
+        xfm = DWTForward(J=1, mode='symmetric', wave='haar')
+        X1 = xfm(mt(x).unsqueeze(0))
+        x_1 = [self.transform(M_t(X1[0][0])) for _ in range(self.num_crops)]
+        x_2 = [self.transform(M_t(X1[1][0][0,:,0])) for _ in range(self.num_crops)]
+        x_3 = [self.transform(M_t(X1[1][0][0,:,1])) for _ in range(self.num_crops)]
+        x_4 = [self.transform(M_t(X1[1][0][0,:,2])) for _ in range(self.num_crops)]
+        return x_1 + x_2 + x_3 + x_4
+        # return [self.transform(x) for _ in range(self.num_crops)]
 
     def __repr__(self) -> str:
         return f"{self.num_crops} x [{self.transform}]"
