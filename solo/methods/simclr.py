@@ -130,6 +130,7 @@ class SimCLR(BaseMethod):
         """
 
         indexes = batch[0]
+################################CODE FOR 8+2 APPROACH############################################
         # print(len(batch[1]))
         # X = batch[1]
         # xfm = DWTForward(J=1, mode='symmetric', wave='haar').to(self.device)
@@ -147,7 +148,8 @@ class SimCLR(BaseMethod):
         # trans = torchvision.transforms.Compose(custom_transforms)
         # a = [trans(X[0]),trans(X[1]),trans(Y1[0]),trans(Y2[0]),trans(Y1[1][0][:,:,0]),trans(Y2[1][0][:,:,0]),trans(Y1[1][0][:,:,1]),trans(Y2[1][0][:,:,1]),trans(Y1[1][0][:,:,2]),trans(Y2[1][0][:,:,2])]
         # batch = [batch[0],a,batch[2]]
-        
+################################CODE FOR 8+2 APPROACH############################################     
+################################CODE FOR PLOTTING############################################
         # fig = plt.figure(figsize=(4, 2))
         # ax1 = fig.add_subplot(2, 4, 1)
         # ax2 = fig.add_subplot(2, 4, 2)
@@ -159,40 +161,43 @@ class SimCLR(BaseMethod):
         # ax8 = fig.add_subplot(2, 4, 8)
         # def convert_to_pil(tensor):
         #     # mt = torchvision.transforms.ToPILImage()
+        #     m = nn.Upsample(scale_factor=2, mode='nearest')
         #     custom_transforms = [torchvision.transforms.Normalize(mean=[-0.4914, -0.4822,-0.4465], std=[1/0.2470, 1/0.2435,1/0.2616])]
         #     inv_trans = torchvision.transforms.Compose(custom_transforms)
         #     tensor = inv_trans(tensor)
         #     # img = mt(tensor)
         #     img = torchvision.transforms.functional.convert_image_dtype(image= tensor,dtype=torch.float64)
+        #     img = m(img.unsqueeze(0)).squeeze(0)
         #     return img.numpy().transpose((1,2,0))
-        # print(convert_to_pil(a[0][0].cpu()).shape)
-        # print(convert_to_pil(a[0][0].cpu()))
-        # ax1.imshow(convert_to_pil(a[0][0].cpu()),interpolation='nearest')
+        # print(convert_to_pil(batch[1][0][0].cpu()).shape)
+        # print(convert_to_pil(batch[1][0][0].cpu()))
+        # ax1.imshow(convert_to_pil(batch[1][0][0].cpu()),interpolation='nearest')
         # ax1.axis('off')
         # ax1.set_title("aug1_approx_component")
-        # ax2.imshow(convert_to_pil(a[2][0].cpu()),interpolation='nearest')
+        # ax2.imshow(convert_to_pil(batch[1][1][0].cpu()),interpolation='nearest')
         # ax2.axis('off')
-        # ax2.set_title("aug1_hzt_component")
-        # ax3.imshow(convert_to_pil(a[4][0].cpu()),interpolation='nearest')
+        # ax2.set_title("aug2_approx_component")
+        # ax3.imshow(convert_to_pil(batch[1][2][0].cpu()),interpolation='nearest')
         # ax3.axis('off')
-        # ax3.set_title("aug1_vrt_component")
-        # ax4.imshow(convert_to_pil(a[6][0].cpu()),interpolation='nearest')
+        # ax3.set_title("aug1_hzt_component")
+        # ax4.imshow(convert_to_pil(batch[1][3][0].cpu()),interpolation='nearest')
         # ax4.axis('off')
-        # ax4.set_title("aug1_dgn_component")
-        # ax5.imshow(convert_to_pil(a[1][0].cpu()),interpolation='nearest')
+        # ax4.set_title("aug2_hzt_component")
+        # ax5.imshow(convert_to_pil(batch[1][4][0].cpu()),interpolation='nearest')
         # ax5.axis('off')
-        # ax5.set_title("aug2_approx_component")
-        # ax6.imshow(convert_to_pil(a[3][0].cpu()),interpolation='nearest')
+        # ax5.set_title("aug1_ver_component")
+        # ax6.imshow(convert_to_pil(batch[1][5][0].cpu()),interpolation='nearest')
         # ax6.axis('off')
-        # ax6.set_title("aug2_hzt_component")
-        # ax7.imshow(convert_to_pil(a[5][0].cpu()),interpolation='nearest')
+        # ax6.set_title("aug2_ver_component")
+        # ax7.imshow(convert_to_pil(batch[1][6][0].cpu()),interpolation='nearest')
         # ax7.axis('off')
-        # ax7.set_title("aug2_vrt_component")
-        # ax8.imshow(convert_to_pil(a[7][0].cpu()),interpolation='nearest')
+        # ax7.set_title("aug1_dia_component")
+        # ax8.imshow(convert_to_pil(batch[1][7][0].cpu()),interpolation='nearest')
         # ax8.axis('off')
         # ax8.set_title("aug2_dgn_component")
         # plt.savefig('DWT_compare.png',dpi=100) 
         # plt.show()
+################################CODE FOR PLOTTING############################################
 
  
         out = super().training_step(batch, batch_idx)       
@@ -205,9 +210,9 @@ class SimCLR(BaseMethod):
         # z_d = torch.cat((out["z"][8],out["z"][9]))
 
         z_a = torch.cat((out["z"][0],out["z"][1]))
-        z_h = torch.cat((out["z"][2],out["z"][3]))
-        z_v = torch.cat((out["z"][4],out["z"][5]))
-        z_d = torch.cat((out["z"][6],out["z"][7]))
+        # z_h = torch.cat((out["z"][2],out["z"][3]))
+        # z_v = torch.cat((out["z"][4],out["z"][5]))
+        # z_d = torch.cat((out["z"][6],out["z"][7]))
 
         # print("LOSS1",z.shape)
 
@@ -229,24 +234,27 @@ class SimCLR(BaseMethod):
             temperature=self.temperature,
         )
 
-        hzt_loss = simclr_loss_func(
-            z_h,
-            indexes=indexes,
-            temperature=self.temperature,
-        )
+        # hzt_loss = simclr_loss_func(
+        #     z_h,
+        #     indexes=indexes,
+        #     temperature=self.temperature,
+        # )
 
-        ver_loss = simclr_loss_func(
-            z_v,
-            indexes=indexes,
-            temperature=self.temperature,
-        )
+        # ver_loss = simclr_loss_func(
+        #     z_v,
+        #     indexes=indexes,
+        #     temperature=self.temperature,
+        # )
 
-        dia_loss = simclr_loss_func(
-            z_d,
-            indexes=indexes,
-            temperature=self.temperature,
-        )
+        # dia_loss = simclr_loss_func(
+        #     z_d,
+        #     indexes=indexes,
+        #     temperature=self.temperature,
+        # )
         l = 1 #lambda
+        hzt_loss=0
+        ver_loss =0
+        dia_loss = 0
         total = approx_loss + hzt_loss + ver_loss + dia_loss
         total_avg = total/4
         final = total*l + nce_loss
