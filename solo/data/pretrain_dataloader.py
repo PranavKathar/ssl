@@ -148,17 +148,17 @@ class NCropAugmentation:
         Returns:
             List[torch.Tensor]: an image in the tensor format.
         """
-        mt = torchvision.transforms.ToTensor()
-        M_t = torchvision.transforms.ToPILImage()
-        xfm = DWTForward(J=1, mode='symmetric', wave='haar')
-        X1 = xfm(mt(x).unsqueeze(0))
-        x_1 = [self.transform(Image.fromarray((X1[0][0].permute(1,2,0).numpy()*255*0.5).astype('uint8'))) for _ in range(self.num_crops)]
+        # mt = torchvision.transforms.ToTensor()
+        # M_t = torchvision.transforms.ToPILImage()
+        # xfm = DWTForward(J=1, mode='symmetric', wave='haar')
+        # X1 = xfm(mt(x).unsqueeze(0))
+        # x_1 = [self.transform(Image.fromarray((X1[0][0].permute(1,2,0).numpy()*255*0.5).astype('uint8'))) for _ in range(self.num_crops)]
         # x_2 = [self.transform(Image.fromarray((X1[1][0][0,:,0].permute(1,2,0).numpy()*255*0.05).astype('uint8'))) for _ in range(self.num_crops)]
         # x_3 = [self.transform(Image.fromarray((X1[1][0][0,:,1].permute(1,2,0).numpy()*255*0.05).astype('uint8'))) for _ in range(self.num_crops)]
         # x_4 = [self.transform(Image.fromarray((X1[1][0][0,:,2].permute(1,2,0).numpy()*255*0.05).astype('uint8'))) for _ in range(self.num_crops)]
-        return x_1
+        # return x_1
         # return x_1 + x_2 + x_3 + x_4
-        # return [self.transform(x) for _ in range(self.num_crops)]
+        return [self.transform(x) for _ in range(self.num_crops)]
 
     def __repr__(self) -> str:
         return f"{self.num_crops} x [{self.transform}]"
